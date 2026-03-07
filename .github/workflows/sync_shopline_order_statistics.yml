@@ -1,0 +1,49 @@
+name: Sync Shopline Order Statistics to BigQuery
+
+on:
+  # schedule:
+  #   - cron: '30 1 * * *'
+  workflow_dispatch:
+    inputs:
+      sync_date:
+        description: 'Sync date in YYYY-MM-DD format (optional, default yesterday)'
+        required: false
+        default: ''
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write GCP service account key
+        shell: bash
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          echo "$GCP_SA_KEY" > /tmp/gcp-key.json
+          echo "GOOGLE_APPLICATION_CREDENTIALS=/tmp/gcp-key.json" >> $GITHUB_ENV
+
+      - name: Run sync
+        env:
+          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MYSQL_DB: caguuu_erp
+          BQ_PROJECT: ${{ secrets.BQ_PROJECT }}
+          BQ_DATASET: ${{ secrets.BQ_DATASET }}
+          BQ_TABLE: shopline_order_statistics
+          SYNC_DATE: ${{ github.event.inputs.sync_date }}
+        run: python sync_shopline_order_statistics.py
