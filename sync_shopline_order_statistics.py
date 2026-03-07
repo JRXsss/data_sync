@@ -119,11 +119,18 @@ def fetch_mysql_data(sync_date: str) -> pd.DataFrame:
         WHERE DATE(date_time) = %s
         ORDER BY id ASC
         """
-        df = pd.read_sql(sql, conn, params=[sync_date])
+        with conn.cursor() as cur:
+            cur.execute(sql, (sync_date,))
+            rows = cur.fetchall()
+            columns = [desc[0] for desc in cur.description]
+
+        df = pd.DataFrame(rows, columns=columns)
+
+        print(df.head(10).to_dict("records"))
+        print(df.columns.tolist())
+
         return df
     finally:
-        print(df.head(5).to_dict("records"))
-        print(df.dtypes)
         conn.close()
 
 
