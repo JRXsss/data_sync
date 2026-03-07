@@ -91,7 +91,7 @@ def ensure_tables():
       create_time DATETIME,
       update_time DATETIME
     )
-    PARTITION BY DATE(create_time)
+    PARTITION BY DATE(update_time)
     CLUSTER BY order_id
     """
 
