@@ -14,8 +14,8 @@ MYSQL_DB = os.getenv("MYSQL_DB", "caguuu_erp")
 
 # BQ_PROJECT = os.getenv("BQ_PROJECT")
 # BQ_DATASET = os.getenv("BQ_DATASET")
-BQ_PROJECT = project-fddee9ed-d147-4ffe-b75
-BQ_DATASET = test
+BQ_PROJECT = "project-fddee9ed-d147-4ffe-b75"
+BQ_DATASET = "test"
 BQ_TABLE = os.getenv("BQ_TABLE", "shopline_order_statistics")
 
 # 可选：指定重刷哪一天。格式 YYYY-MM-DD
