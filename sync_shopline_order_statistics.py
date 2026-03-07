@@ -122,6 +122,8 @@ def fetch_mysql_data(sync_date: str) -> pd.DataFrame:
         df = pd.read_sql(sql, conn, params=[sync_date])
         return df
     finally:
+        print(df.head(5).to_dict("records"))
+        print(df.dtypes)
         conn.close()
 
 
