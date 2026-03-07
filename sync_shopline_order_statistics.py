@@ -2,6 +2,7 @@ import os
 import pymysql
 import pandas as pd
 from google.cloud import bigquery
+from decimal import Decimal
 
 # =========================
 # Env
@@ -186,16 +187,38 @@ def delete_bq_partition():
     print("Deleted target partition in BigQuery.")
 
 
+def row_to_bq_json(row: dict) -> dict:
+    result = {}
+
+    for k, v in row.items():
+        if pd.isna(v):
+            result[k] = None
+        elif isinstance(v, pd.Timestamp):
+            # 目标字段是 DATETIME，传这种格式最稳
+            result[k] = v.strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(v, Decimal):
+            # NUMERIC 建议传字符串，避免精度和 pyarrow 问题
+            result[k] = str(v)
+        elif hasattr(v, "item"):  # numpy/pandas 标量转原生 python 类型
+            result[k] = v.item()
+        else:
+            result[k] = v
+
+    return result
+
+
 def load_to_bq(df: pd.DataFrame):
     if df.empty:
         print("No rows found for the sync date. Skip load.")
         return
 
+    records = [row_to_bq_json(r) for r in df.to_dict(orient="records")]
+
     job_config = bigquery.LoadJobConfig(
         write_disposition="WRITE_APPEND",
         schema=[
-            bigquery.SchemaField("id", "INT64", mode="REQUIRED"),
-            bigquery.SchemaField("order_seq", "STRING", mode="REQUIRED"),
+            bigquery.SchemaField("id", "INT64"),
+            bigquery.SchemaField("order_seq", "STRING"),
             bigquery.SchemaField("region", "STRING"),
             bigquery.SchemaField("province", "STRING"),
             bigquery.SchemaField("city", "STRING"),
@@ -218,10 +241,9 @@ def load_to_bq(df: pd.DataFrame):
         ],
     )
 
-    job = bq.load_table_from_dataframe(df, TARGET_TABLE_ID, job_config=job_config)
+    job = bq.load_table_from_json(records, TARGET_TABLE_ID, job_config=job_config)
     job.result()
-    print(f"Loaded {len(df)} rows into BigQuery.")
-
+    print(f"Loaded {len(records)} rows into {TARGET_TABLE_ID}.")
 
 def main():
     ensure_target_table()
