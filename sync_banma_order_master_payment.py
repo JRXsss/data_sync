@@ -10,7 +10,7 @@ MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DB = os.getenv("MYSQL_DB") or "gaia_fulfillment"
 
---`project-fddee9ed-d147-4ffe-b75.From_mysql.banma_order_master_payment`
+# `project-fddee9ed-d147-4ffe-b75.From_mysql.banma_order_master_payment`
 # BQ_PROJECT = (os.getenv("BQ_PROJECT") or "").strip().strip("`")
 # BQ_DATASET = (os.getenv("BQ_DATASET") or "").strip().strip("`")
 
