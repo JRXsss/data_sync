@@ -63,7 +63,22 @@ jobs:
       #     SYNC_DATE: ${{ github.event.inputs.sync_date }}
       #   run: python sync_banma_order_master.py
 
-      - name: Run banma_order_master_payment incremental sync
+      # - name: Run banma_order_master_payment incremental sync
+      #   env:
+      #     MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+      #     MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+      #     MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      #     MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      #     MYSQL_DB: gaia_fulfillment
+      #     BQ_PROJECT: project-fddee9ed-d147-4ffe-b75
+      #     BQ_DATASET: From_mysql
+      #     BQ_TABLE: banma_order_master_payment
+      #     # MODE: incremental
+      #     MODE: full
+      #     SYNC_DATE: ${{ github.event.inputs.sync_date }}
+      #   run: python sync_banma_order_master_payment.py
+
+      - name: Run banma_sku_sales_detail sync
         env:
           MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
           MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
@@ -72,8 +87,8 @@ jobs:
           MYSQL_DB: gaia_fulfillment
           BQ_PROJECT: project-fddee9ed-d147-4ffe-b75
           BQ_DATASET: From_mysql
-          BQ_TABLE: banma_order_master_payment
+          BQ_TABLE: banma_sku_sales_detail
           # MODE: incremental
           MODE: full
           SYNC_DATE: ${{ github.event.inputs.sync_date }}
-        run: python sync_banma_order_master_payment.py
+        run: python sync_banma_sku_sales_detail.py
