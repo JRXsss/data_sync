@@ -10,7 +10,7 @@ MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DB = os.getenv("MYSQL_DB", "gaia_fulfillment")
 
  # `project-fddee9ed-d147-4ffe-b75.From_mysql.banma_order_master
-BQ_PROJECT = '`project-fddee9ed-d147-4ffe-b75'
+BQ_PROJECT = 'project-fddee9ed-d147-4ffe-b75'
 BQ_DATASET = 'From_mysql'
 BQ_TABLE = os.getenv("BQ_TABLE", "banma_order_master")
 
