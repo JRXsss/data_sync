@@ -46,8 +46,24 @@ jobs:
       #     BQ_DATASET: ${{ secrets.BQ_DATASET }}
       #     BQ_TABLE: shopline_order_statistics
       #     SYNC_DATE: ${{ github.event.inputs.sync_date }}
+      #   run: python sync_shopline_order_statistics.py
             
-      - name: Run banma_order_master incremental sync
+      # - name: Run banma_order_master incremental sync
+      #   env:
+      #     MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+      #     MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+      #     MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      #     MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      #     MYSQL_DB: gaia_fulfillment
+      #     BQ_PROJECT: project-fddee9ed-d147-4ffe-b75
+      #     BQ_DATASET: test
+      #     BQ_TABLE: banma_order_master
+      #     MODE: incremental
+      #     # MODE: full
+      #     SYNC_DATE: ${{ github.event.inputs.sync_date }}
+      #   run: python sync_banma_order_master.py
+
+      - name: Run banma_order_master_amount incremental sync
         env:
           MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
           MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
@@ -56,9 +72,8 @@ jobs:
           MYSQL_DB: gaia_fulfillment
           BQ_PROJECT: project-fddee9ed-d147-4ffe-b75
           BQ_DATASET: test
-          BQ_TABLE: banma_order_master
-          MODE: incremental
-          # MODE: full
+          BQ_TABLE: banma_order_master_amount
+          # MODE: incremental
+          MODE: full
           SYNC_DATE: ${{ github.event.inputs.sync_date }}
-        run: python sync_banma_order_master.py
-        # run: python sync_shopline_order_statistics.py
+        run: python sync_banma_order_master_amount.py
