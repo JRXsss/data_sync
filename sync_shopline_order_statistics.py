@@ -131,21 +131,38 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df.where(pd.notnull(df), None)
 
+    # id
     if "id" in df.columns:
-        df["id"] = df["id"].astype("int64")
+        df["id"] = pd.to_numeric(df["id"], errors="coerce")
+        bad_id_rows = df[df["id"].isna()]
+        if not bad_id_rows.empty:
+            print("Rows with invalid id detected:")
+            print(bad_id_rows.head(10).to_dict("records"))
+        df = df[df["id"].notna()].copy()
+        df["id"] = df["id"].astype("Int64")
 
+    # int fields
     for col in ["order_quantity", "return_quantity"]:
-        if col in df.columns and df[col].notna().any():
-            df[col] = df[col].astype("Int64")
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
-    # MySQL DATETIME -> pandas datetime，后面写入 BQ DATETIME
+    # datetime
     if "date_time" in df.columns:
         df["date_time"] = pd.to_datetime(df["date_time"], errors="coerce")
 
-    string_cols = ["order_seq", "region", "province", "city", "sales_channel"]
-    for col in string_cols:
+    # strings
+    for col in ["order_seq", "region", "province", "city", "sales_channel"]:
         if col in df.columns:
             df[col] = df[col].astype("string")
+
+    # numeric decimal fields
+    for col in [
+        "gross_sales", "discounts", "net_sales", "tax", "express_tax_amount",
+        "member_point_amount", "shipping", "tips", "refunds", "total_sales",
+        "adjust_amount", "refund_adjust_amt"
+    ]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
 
     return df
 
