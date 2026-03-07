@@ -57,8 +57,8 @@ jobs:
           BQ_PROJECT: project-fddee9ed-d147-4ffe-b75
           BQ_DATASET: test
           BQ_TABLE: banma_order_master
-          # MODE: incremental
-          MODE: full
+          MODE: incremental
+          # MODE: full
           SYNC_DATE: ${{ github.event.inputs.sync_date }}
         run: python sync_banma_order_master.py
         # run: python sync_shopline_order_statistics.py
