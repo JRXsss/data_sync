@@ -12,8 +12,10 @@ MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DB = os.getenv("MYSQL_DB", "caguuu_erp")
 
-BQ_PROJECT = os.getenv("BQ_PROJECT")
-BQ_DATASET = os.getenv("BQ_DATASET")
+# BQ_PROJECT = os.getenv("BQ_PROJECT")
+# BQ_DATASET = os.getenv("BQ_DATASET")
+BQ_PROJECT = project-fddee9ed-d147-4ffe-b75
+BQ_DATASET = test
 BQ_TABLE = os.getenv("BQ_TABLE", "shopline_order_statistics")
 
 # 可选：指定重刷哪一天。格式 YYYY-MM-DD
@@ -60,8 +62,8 @@ def get_sync_date_for_mysql(conn):
 def ensure_target_table():
     ddl = f"""
     CREATE TABLE IF NOT EXISTS `{TARGET_TABLE_ID}` (
-      id INT64 NOT NULL,
-      order_seq STRING NOT NULL,
+      id INT64,
+      order_seq STRING,
       region STRING,
       province STRING,
       city STRING,
@@ -83,10 +85,9 @@ def ensure_target_table():
       refund_adjust_amt NUMERIC
     )
     PARTITION BY DATE(date_time)
-    CLUSTER BY sales_channel, order_seq
+    CLUSTER BY order_seq
     """
     bq.query(ddl).result()
-
 
 def fetch_mysql_data(sync_date: str) -> pd.DataFrame:
     conn = get_mysql_conn()
