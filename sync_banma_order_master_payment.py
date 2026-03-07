@@ -10,13 +10,14 @@ MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DB = os.getenv("MYSQL_DB") or "gaia_fulfillment"
 
-# `project-fddee9ed-d147-4ffe-b75.From_mysql.banma_order_master_amount`
+--`project-fddee9ed-d147-4ffe-b75.From_mysql.banma_order_master_payment`
 # BQ_PROJECT = (os.getenv("BQ_PROJECT") or "").strip().strip("`")
 # BQ_DATASET = (os.getenv("BQ_DATASET") or "").strip().strip("`")
-# BQ_TABLE = (os.getenv("BQ_TABLE") or "banma_order_master_amount").strip().strip("`")
+
+# BQ_TABLE = (os.getenv("BQ_TABLE") or "banma_order_master_payment").strip().strip("`")
 BQ_PROJECT = 'project-fddee9ed-d147-4ffe-b75'
 BQ_DATASET = 'From_mysql'
-BQ_TABLE = 'banma_order_master_amount'
+BQ_TABLE = 'banma_order_master_payment'
 
 
 MODE = os.getenv("MODE", "incremental")  # full / incremental
@@ -79,6 +80,14 @@ def ensure_tables():
       used_point NUMERIC,
       product_cost NUMERIC,
       freight_cost NUMERIC,
+      pay_time DATETIME,
+      pay_channel STRING,
+      pay_status STRING,
+      refund_status STRING,
+      original_pay_time DATETIME,
+      is_cod BOOL,
+      tx_no STRING,
+      purchase_freight NUMERIC,
       create_time DATETIME,
       update_time DATETIME
     )
@@ -107,6 +116,14 @@ def ensure_tables():
       used_point NUMERIC,
       product_cost NUMERIC,
       freight_cost NUMERIC,
+      pay_time DATETIME,
+      pay_channel STRING,
+      pay_status STRING,
+      refund_status STRING,
+      original_pay_time DATETIME,
+      is_cod BOOL,
+      tx_no STRING,
+      purchase_freight NUMERIC,
       create_time DATETIME,
       update_time DATETIME
     )
@@ -139,9 +156,17 @@ def fetch_mysql_data(mode: str, sync_date: str | None) -> pd.DataFrame:
           used_point,
           product_cost,
           freight_cost,
+          pay_time,
+          pay_channel,
+          pay_status,
+          refund_status,
+          original_pay_time,
+          is_cod,
+          tx_no,
+          purchase_freight,
           create_time,
           update_time
-        FROM banma_order_master_amount
+        FROM banma_order_master_payment
         """
         if mode == "full":
             sql = base_sql + " ORDER BY order_id ASC"
@@ -170,7 +195,7 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce").astype("Int64")
 
-    for col in ["create_time", "update_time"]:
+    for col in ["pay_time", "original_pay_time", "create_time", "update_time"]:
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
 
@@ -179,9 +204,16 @@ def normalize_df(df: pd.DataFrame) -> pd.DataFrame:
         "pay_freight_currency",
         "refund_currency",
         "discount_currency",
+        "pay_channel",
+        "pay_status",
+        "refund_status",
+        "tx_no",
     ]:
         if col in df.columns:
             df[col] = df[col].astype("string")
+
+    if "is_cod" in df.columns:
+        df["is_cod"] = df["is_cod"].map(lambda x: None if pd.isna(x) else bool(x))
 
     return df
 
@@ -231,6 +263,14 @@ def load_staging(df: pd.DataFrame):
             bigquery.SchemaField("used_point", "NUMERIC"),
             bigquery.SchemaField("product_cost", "NUMERIC"),
             bigquery.SchemaField("freight_cost", "NUMERIC"),
+            bigquery.SchemaField("pay_time", "DATETIME"),
+            bigquery.SchemaField("pay_channel", "STRING"),
+            bigquery.SchemaField("pay_status", "STRING"),
+            bigquery.SchemaField("refund_status", "STRING"),
+            bigquery.SchemaField("original_pay_time", "DATETIME"),
+            bigquery.SchemaField("is_cod", "BOOL"),
+            bigquery.SchemaField("tx_no", "STRING"),
+            bigquery.SchemaField("purchase_freight", "NUMERIC"),
             bigquery.SchemaField("create_time", "DATETIME"),
             bigquery.SchemaField("update_time", "DATETIME"),
         ],
@@ -264,6 +304,14 @@ def merge_target():
       used_point = S.used_point,
       product_cost = S.product_cost,
       freight_cost = S.freight_cost,
+      pay_time = S.pay_time,
+      pay_channel = S.pay_channel,
+      pay_status = S.pay_status,
+      refund_status = S.refund_status,
+      original_pay_time = S.original_pay_time,
+      is_cod = S.is_cod,
+      tx_no = S.tx_no,
+      purchase_freight = S.purchase_freight,
       create_time = S.create_time,
       update_time = S.update_time
     WHEN NOT MATCHED THEN
@@ -271,15 +319,17 @@ def merge_target():
         id, order_id, pay_amount, pay_currency, pay_amount_usd, pay_amount_cny,
         pay_freight, pay_freight_currency, pay_freight_usd, pay_freight_cny,
         refund_amount, refund_currency, refund_amount_usd, refund_amount_cny,
-        discount_amount, discount_currency, used_point, product_cost,
-        freight_cost, create_time, update_time
+        discount_amount, discount_currency, used_point, product_cost, freight_cost,
+        pay_time, pay_channel, pay_status, refund_status, original_pay_time,
+        is_cod, tx_no, purchase_freight, create_time, update_time
       )
       VALUES (
         S.id, S.order_id, S.pay_amount, S.pay_currency, S.pay_amount_usd, S.pay_amount_cny,
         S.pay_freight, S.pay_freight_currency, S.pay_freight_usd, S.pay_freight_cny,
         S.refund_amount, S.refund_currency, S.refund_amount_usd, S.refund_amount_cny,
-        S.discount_amount, S.discount_currency, S.used_point, S.product_cost,
-        S.freight_cost, S.create_time, S.update_time
+        S.discount_amount, S.discount_currency, S.used_point, S.product_cost, S.freight_cost,
+        S.pay_time, S.pay_channel, S.pay_status, S.refund_status, S.original_pay_time,
+        S.is_cod, S.tx_no, S.purchase_freight, S.create_time, S.update_time
       )
     """
     bq.query(sql).result()
