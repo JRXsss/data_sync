@@ -47,15 +47,20 @@ def get_mysql_conn():
     )
 
 
-def get_sync_date_for_mysql(conn):
+def get_sync_start_for_mysql(conn):
     if SYNC_DATE:
+        # 支持传 2026-03-10 或 2026-03-10 00:00:00
+        if len(SYNC_DATE) == 10:
+            return f"{SYNC_DATE} 00:00:00"
         return SYNC_DATE
 
-    sql = "SELECT DATE_SUB(CURDATE(), INTERVAL 1 DAY) AS sync_date"
+    sql = """
+    SELECT CONCAT(DATE_SUB(CURDATE(), INTERVAL 1 DAY), ' 00:00:00') AS sync_start
+    """
     with conn.cursor() as cur:
         cur.execute(sql)
         row = cur.fetchone()
-        return str(row[0])
+    return str(row[0])[0])
 
 
 def ensure_tables():
@@ -132,7 +137,7 @@ def ensure_tables():
     bq.query(stg_sql).result()
 
 
-def fetch_mysql_data(mode: str, sync_date: str | None) -> pd.DataFrame:
+def fetch_mysql_data(mode: str, sync_start: str | None) -> pd.DataFrame:
     conn = get_mysql_conn()
     try:
         base_sql = """
@@ -172,8 +177,8 @@ def fetch_mysql_data(mode: str, sync_date: str | None) -> pd.DataFrame:
             sql = base_sql + " ORDER BY order_id ASC"
             params = ()
         else:
-            sql = base_sql + " WHERE DATE(update_time) = %s ORDER BY order_id ASC"
-            params = (sync_date,)
+            sql = base_sql + " WHERE update_time >= %s ORDER BY order_id ASC"
+            params = (sync_start,)
 
         with conn.cursor() as cur:
             cur.execute(sql, params)
@@ -339,16 +344,17 @@ def merge_target():
 def main():
     ensure_tables()
 
-    sync_date = None
+    sync_start = None
     if MODE != "full":
         conn = get_mysql_conn()
         try:
-            sync_date = get_sync_date_for_mysql(conn)
+            sync_start = get_sync_start_for_mysql(conn)
         finally:
             conn.close()
-        print(f"sync_date={sync_date}")
-
-    df = fetch_mysql_data(MODE, sync_date)
+    
+    print(f"sync_start={sync_start}")
+    
+    df = fetch_mysql_data(MODE, sync_start)
     print(f"fetched_rows={len(df)}")
 
     if df.empty:
