@@ -60,7 +60,7 @@ def get_sync_start_for_mysql(conn):
     with conn.cursor() as cur:
         cur.execute(sql)
         row = cur.fetchone()
-    return str(row[0])[0])
+    return str(row[0])
 
 
 def ensure_tables():
