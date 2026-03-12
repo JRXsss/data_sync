@@ -106,4 +106,4 @@ jobs:
       #     BQ_WATERMARK_TABLE: sync_watermark
       #     MODE: incremental
           # MODE: full
-        run: python sync_shopline_event_record_origin.py
+        # run: python sync_shopline_event_record_origin.py
