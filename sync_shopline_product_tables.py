@@ -204,7 +204,7 @@ def build_merge_sql(target_id: str, stg_id: str, schema: list) -> str:
     """
 
 
-def row_to_json(row: dict, bool_cols: set) -> dict:
+def row_to_json(row: dict, bool_cols: set, int_cols: set) -> dict:
     result = {}
     for k, v in row.items():
         if v is None:
@@ -221,6 +221,8 @@ def row_to_json(row: dict, bool_cols: set) -> dict:
             result[k] = str(v)
         elif k in bool_cols:
             result[k] = bool(v)
+        elif k in int_cols:
+            result[k] = int(v)
         elif hasattr(v, "item"):
             result[k] = v.item()
         else:
@@ -244,6 +246,7 @@ def sync_table(mysql_db: str, mysql_table: str, bq_table: str, schema: list):
     target_id = f"{BQ_PROJECT}.{BQ_DATASET}.{bq_table}"
     stg_id    = f"{BQ_PROJECT}.{BQ_DATASET}.{bq_table}_stg"
     bool_cols = {f.name for f in schema if f.field_type == "BOOL"}
+    int_cols  = {f.name for f in schema if f.field_type == "INT64"}
 
     if MODE == "full":
         df = fetch_full(mysql_db, mysql_table)
@@ -251,7 +254,7 @@ def sync_table(mysql_db: str, mysql_table: str, bq_table: str, schema: list):
             print("  No rows, skipping.")
             return
         df = df.where(pd.notnull(df), None)
-        records = [row_to_json(r, bool_cols) for r in df.to_dict(orient="records")]
+        records = [row_to_json(r, bool_cols, int_cols) for r in df.to_dict(orient="records")]
         ensure_target_table(target_id, schema)
         load_records(records, target_id, schema, "WRITE_TRUNCATE")
         print(f"  Full load: {len(records)} rows -> {target_id}")
@@ -262,7 +265,7 @@ def sync_table(mysql_db: str, mysql_table: str, bq_table: str, schema: list):
             print("  No updated rows in the past 2 days, skipping.")
             return
         df = df.where(pd.notnull(df), None)
-        records = [row_to_json(r, bool_cols) for r in df.to_dict(orient="records")]
+        records = [row_to_json(r, bool_cols, int_cols) for r in df.to_dict(orient="records")]
 
         ensure_target_table(target_id, schema)
         ensure_staging_table(stg_id, schema)
