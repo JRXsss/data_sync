@@ -1,8 +1,6 @@
 name: Sync Shopline Order Statistics to BigQuery
 
 on:
-  schedule:
-    - cron: '30 1 * * *'
   workflow_dispatch:
     inputs:
       sync_date:
