@@ -173,7 +173,12 @@ def bq_type(field: bigquery.SchemaField) -> str:
 
 def ensure_target_table(target_id: str, schema: list):
     cols = ",\n  ".join(f"`{f.name}` {bq_type(f)}" for f in schema)
-    bq.query(f"CREATE TABLE IF NOT EXISTS `{target_id}` (\n  {cols}\n)").result()
+    bq.query(f"""
+        CREATE TABLE IF NOT EXISTS `{target_id}` (
+          {cols}
+        )
+        PARTITION BY DATE(update_time)
+    """).result()
 
 
 def ensure_staging_table(stg_id: str, schema: list):
@@ -247,6 +252,7 @@ def sync_table(mysql_db: str, mysql_table: str, bq_table: str, schema: list):
             return
         df = df.where(pd.notnull(df), None)
         records = [row_to_json(r, bool_cols) for r in df.to_dict(orient="records")]
+        ensure_target_table(target_id, schema)
         load_records(records, target_id, schema, "WRITE_TRUNCATE")
         print(f"  Full load: {len(records)} rows -> {target_id}")
 
