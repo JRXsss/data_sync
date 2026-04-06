@@ -1,14 +1,18 @@
 name: Sync Shopline Order Statistics to BigQuery
 
 on:
-  # schedule:
-  #   - cron: '30 1 * * *'
+  schedule:
+    - cron: '30 1 * * *'
   workflow_dispatch:
     inputs:
       sync_date:
         description: 'Sync date in YYYY-MM-DD format (optional, default yesterday)'
         required: false
         default: ''
+      product_tables_mode:
+        description: 'Mode for shopline product tables sync: full / incremental'
+        required: false
+        default: 'incremental'
 
 jobs:
   sync:
@@ -92,6 +96,15 @@ jobs:
           # MODE: full
           SYNC_DATE: ${{ github.event.inputs.sync_date }}
         run: python sync_banma_sku_sales_detail.py
+
+      - name: Run shopline_product_tables sync
+        env:
+          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+          MYSQL_USER: ${{ secrets.MYSQL_USER }}
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+          MODE: ${{ github.event.inputs.product_tables_mode || 'incremental' }}
+        run: python sync_shopline_product_tables.py
 
       - name: Run shopline_event_record_origin sync
         env:
