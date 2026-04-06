@@ -10,7 +10,7 @@ on:
       product_tables_mode:
         description: 'Mode for shopline product tables sync: full / incremental'
         required: false
-        default: 'incremental'
+        default: 'full'
 
 jobs:
   sync:
