@@ -1,13 +1,10 @@
--- TVF: function.apply_7d_window
--- Description: 对已构建好 hit_traffic_source 的事件流，应用 7 天滑动窗口，
---              计算每个事件的首次触点、末次触点、末次非直接触点。
+-- TVF: function.tag_client_source
+-- Description: 对事件流中的每一行，基于历史行为上下文补全流量来源标签。
 -- Input:  ANY TABLE — 需包含字段: date_utc8, date_utc9, event_time, client_id,
 --                                  event_id, event_name, hit_traffic_source
 -- Output: TABLE (原字段 + first_traffic_source, last_traffic_source, last_non_direct_traffic_source)
--- Usage:
---   SELECT * FROM `${GCP_PROJECT_ID}.function.apply_7d_window`((SELECT * FROM event_data))
 
-CREATE OR REPLACE TABLE FUNCTION `${GCP_PROJECT_ID}.function.apply_7d_window`(
+CREATE OR REPLACE TABLE FUNCTION `${GCP_PROJECT_ID}.function.tag_client_source`(
   input_table ANY TABLE
 )
 AS (

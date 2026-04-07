@@ -56,10 +56,14 @@ WITH event_data AS (
     FROM `${GCP_PROJECT_ID}.behavior_data.shopline_behavior_web_raw_data`
     WHERE date_utc8 >= CURRENT_DATE('Asia/Shanghai') - 8
   )
+),
+
+tagged AS (
+  SELECT * FROM `${GCP_PROJECT_ID}.function.tag_client_source`((SELECT * FROM event_data))
 )
 
 SELECT DISTINCT *
-FROM `${GCP_PROJECT_ID}.function.apply_7d_window`((SELECT * FROM event_data))
+FROM tagged
 WHERE date_utc8 >= CURRENT_DATE('Asia/Shanghai') - 1
 
 ) AS b
