@@ -95,14 +95,14 @@ jobs:
           SYNC_DATE: ${{ github.event.inputs.sync_date }}
         run: python sync_banma_sku_sales_detail.py
 
-      - name: Run shopline_product_tables sync
-        env:
-          MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
-          MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
-          MYSQL_USER: ${{ secrets.MYSQL_USER }}
-          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
-          MODE: ${{ github.event.inputs.product_tables_mode || 'incremental' }}
-        run: python sync_shopline_product_tables.py
+      # - name: Run shopline_product_tables sync
+      #   env:
+      #     MYSQL_HOST: ${{ secrets.MYSQL_HOST }}
+      #     MYSQL_PORT: ${{ secrets.MYSQL_PORT }}
+      #     MYSQL_USER: ${{ secrets.MYSQL_USER }}
+      #     MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD }}
+      #     MODE: ${{ github.event.inputs.product_tables_mode || 'incremental' }}
+      #   run: python sync_shopline_product_tables.py
 
       - name: Run shopline_event_record_origin sync
         env:
